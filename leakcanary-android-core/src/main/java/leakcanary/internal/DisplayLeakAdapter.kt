@@ -191,16 +191,16 @@ internal class DisplayLeakAdapter constructor(
     if (position == 1) {
       return GC_ROOT
     } else if (position == 2) {
-      if (leakTrace.referencePath.size == 1) {
-        return START_LAST_REACHABLE
+      return when (leakTrace.referencePath.size) {
+        0 -> END_FIRST_UNREACHABLE
+        1 -> START_LAST_REACHABLE
+        else -> {
+          val nextReachability = leakTrace.referencePath[1].originObject
+          if (nextReachability.leakingStatus != NOT_LEAKING) {
+            START_LAST_REACHABLE
+          } else START
+        }
       }
-      val nextReachability =
-        if (position + 1 == count - 1) leakTrace.leakingObject else leakTrace.referencePath[elementIndex(
-            position + 1
-        )].originObject
-      return if (nextReachability.leakingStatus != NOT_LEAKING) {
-        START_LAST_REACHABLE
-      } else START
     } else {
       val isLeakingInstance = position == count - 1
       if (isLeakingInstance) {
